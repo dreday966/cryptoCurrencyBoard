@@ -9,6 +9,7 @@ import {changeState} from './store';
 
 const View = ({
   inputValues = [1,2,3],
+  prices = {},
   onChange = console.log,
   totalPrice = '1',
   onClickRefresh
@@ -16,19 +17,19 @@ const View = ({
   <div>
     <button onClick={onClickRefresh}>刷新</button>
     <div>
-      <p>bitcoin count</p>
+      <p>bitcoin 数量（单价：{prices.btc} 元）</p>
       <input value={inputValues[0]} onChange={e => onChange({index: 0, value: e.target.value})}/>
-
+      
     </div>
 
     <div>
-      <p>ada count</p>
+      <p>ada 数量（单价：{prices.ada} 元）</p>
       <input value={inputValues[1]} onChange={e => onChange({index: 1, value: e.target.value})}/>
 
     </div>
 
     <div>
-      <p>eth count</p>
+      <p>eth 数量（单价：{prices.eth} 元）</p>
       <input value={inputValues[2]} onChange={e => onChange({index: 2, value: e.target.value})}/>
     </div>
 
@@ -57,6 +58,12 @@ const ViewContainer = connect(
         inputValues[1],
         inputValues[2],
       ].map(v => Number(v) || 0);
+
+      var prices = {
+        btc: btcPrice,
+        eth: ethPrice,
+        ada: adaPrice
+      }
       
       var totalPrice = btcCount * btcPrice 
         + ethCount * ethPrice
@@ -64,7 +71,7 @@ const ViewContainer = connect(
     }
     
     return {
-      totalPrice, inputValues
+      totalPrice, inputValues, prices
     }
   },
   {

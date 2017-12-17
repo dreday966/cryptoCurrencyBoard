@@ -10,9 +10,11 @@ import {changeState} from './store';
 const View = ({
   inputValues = [1,2,3],
   onChange = console.log,
-  totalPrice = '1'
+  totalPrice = '1',
+  onClickRefresh
 }) => (
   <div>
+    <button onClick={onClickRefresh}>刷新</button>
     <div>
       <p>bitcoin count</p>
       <input value={inputValues[0]} onChange={e => onChange({index: 0, value: e.target.value})}/>
@@ -73,7 +75,13 @@ const ViewContainer = connect(
           [index]: value
         }
       }
-    })
+    }),
+    onClickRefresh: () => dispatch => {
+      getTickers().then(priceInfo => dispatch({
+        type: 'YO',
+        payload: {priceInfo}
+      }));
+    }
   }
 )(View)
 

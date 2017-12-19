@@ -4,15 +4,15 @@ import logo from './logo.svg';
 import './App.css';
 import {getTickers} from './fetch';
 import {changeState} from './store';
-
-
+import {VictoryPie} from 'victory';
 
 const View = ({
   inputValues = [1,2,3],
   prices = {},
   onChange = console.log,
   totalPrice = '1',
-  onClickRefresh
+  onClickRefresh,
+  victoryData
 }) => (
   <div>
     <button onClick={onClickRefresh}>刷新</button>
@@ -34,6 +34,12 @@ const View = ({
     </div>
 
     <p>总共：{totalPrice} 人民币</p>
+
+    <VictoryPie 
+      data={victoryData}
+      colorScale="qualitative"
+      labelRadius={70}
+    />
   </div>
 );
 
@@ -67,11 +73,37 @@ const ViewContainer = connect(
       
       var totalPrice = btcCount * btcPrice 
         + ethCount * ethPrice
-        + adaCount * adaPrice
+        + adaCount * adaPrice;
+
+      
+      var victoryData = [
+        {
+          price: btcCount * btcPrice,
+          name: 'btc'
+        },
+        {
+          price: adaCount * adaPrice,
+          name: 'ada'
+        },
+        {
+          price: ethCount * ethPrice,
+          name: 'eth'
+        },
+      ].filter(({price}) => price !== 0)
+      .map(({name, price}) => ({
+        x: 0, y: price, label: `${name}: ${Math.round(price)}元` 
+      }));
+
+      // var victoryData = [
+      //   { x: 0, y: 1, label: "btc" },
+      //   { x: 0, y: 3, label: "ada" },
+      //   { x: 0, y: 2, label: "eth" },
+      // ]
     }
     
     return {
-      totalPrice, inputValues, prices
+      totalPrice, inputValues, prices, 
+      victoryData
     }
   },
   {

@@ -14,7 +14,8 @@
     "redux": "^3.7.2",
     "redux-localstorage": "^0.4.1",
     "redux-persist": "^5.4.0",
-    "redux-thunk": "^2.2.0"
+    "redux-thunk": "^2.2.0",
+    "victory": "^0.24.3"
   },
   "scripts": {
     "start": "react-scripts start",

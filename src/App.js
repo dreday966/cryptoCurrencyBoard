@@ -131,7 +131,7 @@ const ViewContainer = connect(state => {
           n1, p1
         ],
         [n2, p2]
-      ]) => `1 ${n1} = ${new Number(p1 / p2).toFixed(2)} ${n2}`)
+      ]) => `1 ${n1} = ${new Number(p1 / p2).toFixed(8)} ${n2}`)
   }
 
   return {totalPrice, inputValues, prices, victoryData, exchangeInfos}

@@ -8,6 +8,46 @@ import Combinatorics from 'js-combinatorics';
 import {toPairs, sum} from 'ramda';
 import {GreenBorderButton} from './GreenButton';
 import {mapValues, set} from 'lodash';
+import { PureDialog } from './PureDialog';
+
+const CoinAllocationInput = ({
+  coinSymbols = [], 
+  inputingRMBValue,
+  onChangeRMB,
+  inputValues = {},
+  onChangeCoinValue,
+  prices,
+  showPrices = true
+}) => (
+  <div>
+    <div>
+          <p> 持有人民币数量 </p>
+          <input
+            value={inputingRMBValue}
+            onChange={e => onChangeRMB(e.target.value)}
+          />
+      </div>
+    {
+      coinSymbols.map(symbol => (
+        <div>
+          <p> {symbol} 数量 {showPrices && `（单价：${prices[symbol]}元）`} </p>
+          <input
+            value={inputValues[symbol]}
+            onChange={e => onChangeCoinValue({symbol, value: e.target.value})}
+          />
+        </div>
+      ))
+    }
+  </div>  
+);
+
+const BorderDiv = ({style, ...props}) => (
+  <div style={{
+    border: 'gray solid 1px',
+    padding: '0px 8px',
+    ...style
+  }} {...props}/>
+);
 
 const View = ({
   inputValues = [
@@ -29,9 +69,7 @@ const View = ({
   onClickShowAdd,
   onClickHideAdd
 }) => (
-  <div style={{
-    padding: '20px'
-  }}>
+  <div>
     <div>
     <GreenBorderButton
       onClick={onClickRefresh}
@@ -98,12 +136,67 @@ const View = ({
     }}>
       <p>汇率换算</p>
       <ul>
-        {exchangeInfos.map(info => <li>{info}</li>)
-}
+        {exchangeInfos.map(info => <li>{info}</li>)}
       </ul>
     </div>
   </div>
 );
+
+const OldAllocations = ({data, onClickAdd}) => (
+  <BorderDiv style={{marginTop: '10px'}}>
+    <h2>之前分配方案的现在价值</h2>
+    <div style={{margin: '10px 0px'}}>
+      <button onClick={onClickAdd}>添加方案</button>
+
+    </div>
+    {
+      data.map(({des, value}) => 
+        <p>
+          {des} <br/>
+          {value}
+        </p>
+      )
+    }
+  </BorderDiv>
+);
+
+const OldAllocationsContainer = connect(
+  state => {
+    const {oldAllocations, priceInfo, symbols} = state
+    const prices = getPrices(priceInfo, symbols);
+
+    
+    return {
+      data: oldAllocations.map((counts, index) => {
+        const total = sum(
+          symbols.map(s => prices[s] * counts[s])
+        );
+  
+        return {
+          des: `老方案${index + 1}`,
+          value: total,
+        }
+      })
+    }
+  },
+  {
+    onClickAdd: () => ({
+      type: 'YO',
+      payload: {
+        addOldAllocationDialog: {
+          show: true
+        }
+      }
+    }),
+  }
+)(OldAllocations);
+
+const getPrices = (priceInfo, symbols) => symbols.reduce((acc, cur) => {
+  return {
+    ...acc,
+    [cur]: priceInfo[cur].price_cny
+  }
+}, {});
 
 const ViewContainer = connect(state => {
   const {
@@ -116,12 +209,7 @@ const ViewContainer = connect(state => {
 
     const coinCounts = mapValues(inputValues, v => Number(v) || 0)
 
-    var prices = symbols.reduce((acc, cur) => {
-      return {
-        ...acc,
-        [cur]: priceInfo[cur].price_cny
-      }
-    }, {});
+    var prices = getPrices(priceInfo, symbols);
     
     var totalPrice = sum(
       symbols.map(symbol => 
@@ -150,7 +238,7 @@ const ViewContainer = connect(state => {
   return {
     totalPrice, inputValues, prices, 
     victoryData, exchangeInfos, inputingSymol,
-    coinSymbols: symbols, showAdd
+    coinSymbols: symbols, showAdd, inputingRMBValue
   }
 }, {
   onChange: ({symbol, value}) => ({
@@ -202,7 +290,96 @@ const ViewContainer = connect(state => {
       showAdd: false
     }
   }),
-})(View)
+})(View);
+
+
+const AddOldAllocationDialog = ({
+  show,
+  onClose,
+  onClickConfirm,
+  ...restProps
+}) => (
+  show && (
+    <PureDialog 
+      showClose
+      style={{
+        background: 'white',
+        padding: '40px'
+      }}
+      onClose={onClose}
+      >
+      <CoinAllocationInput
+        showPrices={false} 
+        {...restProps}
+      />
+      <button style={{marginTop: '10px'}} onClick={onClickConfirm}>确认</button>
+    </PureDialog>
+  )
+);
+
+const AddOldAllocationDialogContainer = connect(
+  state => {
+    const {
+      symbols, addOldAllocationDialog
+    } = state;
+
+    if (addOldAllocationDialog){
+      var {inputingRMBValue, inputValues, show} = addOldAllocationDialog;
+    }
+    return {
+      coinSymbols: symbols, 
+      inputingRMBValue, inputValues,
+      show
+    }
+  },
+  {
+    onChangeCoinValue: ({symbol, value}) => ({
+      type: 'YO',
+      payload: {
+        addOldAllocationDialog: {
+          inputValues: {
+            [symbol]: value
+          }
+        }
+      }
+    }),
+    onChangeRMB: value => ({
+      type: 'YO',
+      payload: {
+        addOldAllocationDialog: {
+          inputingRMBValue: value
+        }
+      }
+    }),
+    onClose: () => ({
+      type: 'YO',
+      payload: {
+        addOldAllocationDialog: {
+          show: false
+        }
+      }
+    }),
+    onClickConfirm: () => (dispatch, getState) => {
+      const {priceInfo, oldAllocations, symbols, addOldAllocationDialog} = getState();
+      
+      const coinCounts = {
+        ...mapValues(addOldAllocationDialog.inputValues, v => Number(v) || 0),
+        CNY: Number(addOldAllocationDialog.inputingRMBValue) || 0 
+      };
+
+      dispatch({
+        type: 'YO',
+        payload: {
+          oldAllocations: oldAllocations 
+            ? [...oldAllocations, coinCounts]
+            : [coinCounts]
+        }
+      });
+        
+    }
+  }
+)(AddOldAllocationDialog);
+
 
 class Pro extends Component {
 
@@ -211,7 +388,13 @@ class Pro extends Component {
   }
 
   render() {
-    return <ViewContainer/>;
+    return <div style={{
+      padding: '20px'
+    }}>
+      <ViewContainer/>
+      <AddOldAllocationDialogContainer/>
+      <OldAllocationsContainer/>
+    </div>
   }
 }
 

@@ -22,7 +22,12 @@ const View = ({
   coinSymbols = [],
   onChangeNewCoinSymbol,
   inputingSymol,
-  onClickAddSymbol
+  onClickAddSymbol,
+  inputingRMBValue,
+  onChangeRMB,
+  showAdd,
+  onClickShowAdd,
+  onClickHideAdd
 }) => (
   <div style={{
     padding: '20px'
@@ -36,8 +41,6 @@ const View = ({
       }}>
       刷新
     </GreenBorderButton>
-    <input value={inputingSymol} onChange={onChangeNewCoinSymbol}/> 
-    <button onClick={onClickAddSymbol}>添加新币</button>
 
     </div>
     
@@ -46,6 +49,14 @@ const View = ({
       border: 'gray solid 1px',
       padding: '0px 8px'
     }}>
+      <p>总共价值：{totalPrice} 人民币</p>
+      <div>
+            <p> 持有人民币数量 </p>
+            <input
+              value={inputingRMBValue}
+              onChange={e => onChangeRMB(e.target.value)}
+            />
+          </div>
       {
         coinSymbols.map(symbol => (
           <div>
@@ -58,7 +69,25 @@ const View = ({
         ))
       }
 
-      <p>总共：{totalPrice} 人民币</p>
+      
+    </div>
+    <div>
+      {
+        showAdd ? (
+          <div style={{
+            border: 'gray solid 1px',
+            padding: '8px',
+            margin: '10px 0px'
+          }}>
+            <button onClick={onClickHideAdd}> 关闭 </button>
+            <input value={inputingSymol} onChange={onChangeNewCoinSymbol}/>
+            <button onClick={onClickAddSymbol}>添加新币</button>
+          </div>
+        ) : (
+          <button onClick={onClickShowAdd}> + </button>
+        )
+      }
+      
     </div>
 
     <VictoryPie data={victoryData} colorScale="qualitative" labelRadius={70}/>
@@ -77,9 +106,13 @@ const View = ({
 );
 
 const ViewContainer = connect(state => {
-  const {priceInfo, inputValues, symbols, inputingSymol} = state;
+  const {
+    priceInfo, inputValues, symbols, 
+    inputingSymol, inputingRMBValue,
+    showAdd
+  } = state;
 
-  if (priceInfo && inputValues && symbols) {
+  if (priceInfo && inputValues && symbols && inputingRMBValue) {
 
     const coinCounts = mapValues(inputValues, v => Number(v) || 0)
 
@@ -94,9 +127,7 @@ const ViewContainer = connect(state => {
       symbols.map(symbol => 
         priceInfo[symbol].price_cny * coinCounts[symbol]
       )
-    );
-
-    ;
+    ) + Number(inputingRMBValue);
 
     var victoryData = symbols
     .filter(symbol => coinCounts[symbol] !== 0)
@@ -119,7 +150,7 @@ const ViewContainer = connect(state => {
   return {
     totalPrice, inputValues, prices, 
     victoryData, exchangeInfos, inputingSymol,
-    coinSymbols: symbols
+    coinSymbols: symbols, showAdd
   }
 }, {
   onChange: ({symbol, value}) => ({
@@ -143,9 +174,7 @@ const ViewContainer = connect(state => {
     }
   }),
   onClickAddSymbol: () => (dispatch, getState) => {
-    
     const {symbols = [], inputingSymol} = getState();
-
     if (!symbols.find(e => e === inputingSymol)){
       dispatch({
         type: 'YO',
@@ -154,8 +183,25 @@ const ViewContainer = connect(state => {
         }
       });
     }
-
-  }
+  },
+  onChangeRMB: value => ({
+    type: 'YO',
+    payload: {
+      inputingRMBValue: value
+    }
+  }),
+  onClickShowAdd: value => ({
+    type: 'YO',
+    payload: {
+      showAdd: true
+    }
+  }),
+  onClickHideAdd: value => ({
+    type: 'YO',
+    payload: {
+      showAdd: false
+    }
+  }),
 })(View)
 
 class Pro extends Component {

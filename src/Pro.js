@@ -150,7 +150,7 @@ const OldAllocations = ({data, onClickAdd}) => (
 
     </div>
     {
-      data.map(({des, value}) => 
+      data && data.map(({des, value}) => 
         <p>
           {des} <br/>
           {value}
@@ -167,7 +167,7 @@ const OldAllocationsContainer = connect(
 
     
     return {
-      data: oldAllocations.map((counts, index) => {
+      data: oldAllocations && oldAllocations.map((counts, index) => {
         const total = sum(
           symbols.map(s => prices[s] * counts[s])
         );
@@ -299,7 +299,8 @@ const AddOldAllocationDialog = ({
   onClickConfirm,
   ...restProps
 }) => (
-  show && (
+  show 
+  ? (
     <PureDialog 
       showClose
       style={{
@@ -315,6 +316,7 @@ const AddOldAllocationDialog = ({
       <button style={{marginTop: '10px'}} onClick={onClickConfirm}>确认</button>
     </PureDialog>
   )
+  : null
 );
 
 const AddOldAllocationDialogContainer = connect(
